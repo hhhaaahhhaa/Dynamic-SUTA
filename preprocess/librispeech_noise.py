@@ -121,7 +121,7 @@ def sythesize(noise_type: str, snr_level=10):
 
 if __name__ == "__main__":
     np.random.seed(666)
-    # libirspeech_preprocess()
+    libirspeech_preprocess()
     sythesize("GS", snr_level=5)
     sythesize("AC", snr_level=5)
     sythesize("AA", snr_level=5)
