@@ -1,0 +1,5 @@
+update_freq: 5
+memory: 5
+reset: dynamic
+patience: 2
+K: 100

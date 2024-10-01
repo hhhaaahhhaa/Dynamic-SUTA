@@ -1,0 +1,10 @@
+torch
+transformers
+pandas
+jiwer
+torchaudio
+soundfile
+matplotlib
+datasets
+librosa
+numpy==1.26.4
