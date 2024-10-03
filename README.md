@@ -1,5 +1,5 @@
 # Dynamic-SUTA
-Official implementation of [Continual Test-time Adaptation for End-to-end Speech Recognition on Noisy Speech](https://arxiv.org/abs/2406.11064) (EMNLP 2024)
+Official implementation of EMNLP 2024 paper [Continual Test-time Adaptation for End-to-end Speech Recognition on Noisy Speech](https://arxiv.org/abs/2406.11064).
 
 ## Installation
 ```
@@ -26,10 +26,11 @@ Available `strategy_name` tags are in `src/strategies/load.py`, available `task_
 The repo is designed to allow researchers to easily add new strategies and tasks with new tags.
 
 ## Contact
-Guan-Ting Lin [email] daniel094144@gmail.com
-Wei-Ping Huang [email] thomas1232121@gmail.com
+- Guan-Ting Lin [email] daniel094144@gmail.com
+- Wei-Ping Huang [email] thomas1232121@gmail.com
 
 ## Citation
+If you find our work useful, please use the following citation:
 ```
 @misc{lin2024continualtesttimeadaptationendtoend,
       title={Continual Test-time Adaptation for End-to-end Speech Recognition on Noisy Speech}, 

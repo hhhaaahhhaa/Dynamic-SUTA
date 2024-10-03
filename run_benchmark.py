@@ -16,7 +16,6 @@ os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:256"  # https://stack
 def create_config(args):
     """ Create a dictionary for full configuration """
     res = {
-        "exp_name": args.exp_name,
         "strategy_name": args.strategy_name,
         "task_name": args.task_name,
     }
@@ -35,6 +34,7 @@ def create_config(args):
 def main(args):
     config = create_config(args)
 
+    exp_name = args.exp_name
     exp_root = f"results/benchmark/{args.strategy_name}/{args.exp_name}/{args.task_name}"
     os.makedirs(exp_root, exist_ok=True)
     config["output_dir"] = {
@@ -43,7 +43,7 @@ def main(args):
         "ckpt_dir": f"{exp_root}/ckpt"
     }
     with open(f"{exp_root}/config.yaml", "w", encoding="utf-8") as f:
-        yaml.dump(config, f)
+        yaml.dump(config, f, sort_keys=False)
 
     strategy = get_strategy_cls(args.strategy_name)(config)
     task = get_task(args.task_name)
@@ -57,7 +57,7 @@ def main(args):
             exit()
 
     print("========================== Start! ==========================")
-    print("Exp name: ", config["exp_name"])
+    print("Exp name: ", exp_name)
     print("Strategy name: ", config["strategy_name"])
     print("Task name: ", config["task_name"])
     print("Log directory: ", config["output_dir"]["log_dir"])
