@@ -1,5 +1,6 @@
-torch
-transformers
+numpy==1.26.4
+torch==2.4.1
+transformers==4.45.1
 pandas
 jiwer
 torchaudio
@@ -7,4 +8,7 @@ soundfile
 matplotlib
 datasets
 librosa
-numpy==1.26.4
+matplotlib
+seaborn
+openai
+pyctcdecode

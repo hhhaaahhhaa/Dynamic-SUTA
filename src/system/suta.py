@@ -2,7 +2,6 @@ import numpy as np
 import torch
 import torch.nn as nn
 from transformers import Wav2Vec2ForCTC, Wav2Vec2Processor
-from transformers import HubertForCTC, Data2VecAudioForCTC
 from copy import deepcopy
 import json
 
@@ -19,16 +18,28 @@ class SUTASystem(object):
         self.history = {}
         self.adapt_count = 0
 
-        # load model and tokenizer
-        self.processor = Wav2Vec2Processor.from_pretrained(config["model_name"], sampling_rate=SUTASystem.SAMPLE_RATE)
-        
-        # Model ablation
-        if config["model_name"] == "facebook/data2vec-audio-base-960h":
-            self.model = Data2VecAudioForCTC.from_pretrained(config["model_name"])
-        elif config["model_name"] == "facebook/hubert-large-ls960-ft":
-            self.model = HubertForCTC.from_pretrained(config["model_name"])
+        # load processor and model
+        raw_processor_no_lm = Wav2Vec2Processor.from_pretrained(config["model_name"], sampling_rate=SUTASystem.SAMPLE_RATE)
+        self.raw_processor_no_lm = raw_processor_no_lm
+        if config.get("use_lm", False) or config["model_name"] == "patrickvonplaten/wav2vec2-base-960h-4-gram":
+            from transformers import Wav2Vec2ProcessorWithLM
+            ngram_decoder = Wav2Vec2ProcessorWithLM.from_pretrained("patrickvonplaten/wav2vec2-base-960h-4-gram").decoder
+            self.processor = Wav2Vec2ProcessorWithLM(
+                feature_extractor=raw_processor_no_lm.feature_extractor,
+                tokenizer=raw_processor_no_lm.tokenizer,
+                decoder=ngram_decoder
+            )
         else:
-            self.model = Wav2Vec2ForCTC.from_pretrained(config["model_name"])
+            self.processor = raw_processor_no_lm
+        
+        if config["model_name"] == "facebook/data2vec-audio-base-960h":
+            from transformers import Data2VecAudioForCTC
+            self.model = Data2VecAudioForCTC.from_pretrained(config["model_name"], ctc_loss_reduction="mean")
+        elif config["model_name"] == "facebook/hubert-large-ls960-ft":
+            from transformers import HubertForCTC
+            self.model = HubertForCTC.from_pretrained(config["model_name"], ctc_loss_reduction="mean")
+        else:
+            self.model = Wav2Vec2ForCTC.from_pretrained(config["model_name"], ctc_loss_reduction="mean")  # be careful that we need to use mean
         
         self.model.train()  # huggingface default loads with eval mode
         self.model.cuda()
@@ -279,14 +290,69 @@ class SUTASystem(object):
         self.optimizer.step()
         self.model.zero_grad()
 
+    # inference
     @torch.no_grad()
-    def inference(self, wavs):
+    def inference(self, wavs, return_logits=False):
         inputs = self._wav_to_model_input(wavs)
         outputs = self.model(**inputs).logits
         predicted_ids = torch.argmax(outputs, dim=-1)
-        transcription = self.processor.batch_decode(predicted_ids)
+        transcription = self.raw_processor_no_lm.batch_decode(predicted_ids)
+        
+        if return_logits:
+            logits = outputs.detach().cpu().numpy()
+            return list(transcription), logits
+        else:
+            return list(transcription)
+    
+    @torch.no_grad()
+    def beam_inference(self, wavs, n_best=1, text_only=True):
+        """ Note that the underlying model should support beam search! """
+        inputs = self._wav_to_model_input(wavs)
+        logits = self.model(**inputs).logits
+        # CAUTION:
+        # See https://www.youtube.com/watch?v=mp7fHMTnK9A for definition of alpha and beta, and note that the defualt 
+        # value of beta is not 0, which includes word length penalty and therefore not pure LM score
+        if len(logits) == 1:  # no batch
+            res = self.processor.decode(logits[0].cpu().numpy(), n_best=n_best, alpha=0.5, beta=0.0)
+        else:
+            res = self.processor.batch_decode(logits.cpu().numpy(), n_best=n_best, alpha=0.5, beta=0.0)
+        if not text_only:
+            return res
+        transcription = res.text
         
         return list(transcription)
+    
+    # indicators
+    @torch.no_grad()
+    def calc_probability(self, wavs) -> float:
+        assert len(wavs) == 1
+        inputs = self._wav_to_model_input(wavs)  # inputs belongs to a custom dict class defined in transformers, not tensor
+        inputs = inputs.to(device=self.model.device)
+        outputs = self.model(**inputs).logits
+        probability = outputs.log_softmax(dim=-1).sum().item()  # all experiments do not use length normalization to maintain simplicity
+
+        return probability
+
+    def calc_lm_score(self, text, normalized=False) -> float:
+        self.processor.decoder.reset_params(  # CAUTION: need to reset to correct parameters or else will mismatch beam search scores!
+            alpha=1.0, beta=0.0, unk_score_offset=None, lm_score_boundary=None
+        )
+        lm = self.processor.decoder._language_model
+        raw_lm_score = 0.0
+        start_state = lm.get_start_state()
+        words = text.split(" ")
+        n_word = len(words)
+        for idx in range(n_word):
+            score, start_state = lm.score(start_state, words[idx], is_last_word=False)
+            # print("Word: ", words[idx], score)
+            raw_lm_score += score
+        
+        # finalize
+        score, _ = lm.score(start_state, "", is_last_word=True)
+        raw_lm_score += score
+        if normalized:
+            raw_lm_score = raw_lm_score / (n_word + 1)
+        return raw_lm_score
     
     @torch.no_grad()
     def calc_suta_loss(self, wavs):

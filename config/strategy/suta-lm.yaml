@@ -1,0 +1,2 @@
+acoustic_threshold: -0.05
+patience: 3

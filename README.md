@@ -3,15 +3,15 @@ Official implementation of EMNLP 2024 paper [Continual Test-time Adaptation for 
 
 ## Installation
 ```
-git clone https://github.com/hhhaaahhhaa/Dynamic-SUTA.git
-cd Dynamic-SUTA
+git clone https://github.com/hhhaaahhhaa/ASR-TTA.git
+cd ASR-TTA
 pip install -r requirements.txt
 ```
 
 ## Data Preparation
-To preprocess librispeech test set and add 10 noises, see preprocess/librispeech_noise.py.
+To preprocess librispeech test set and add 10 noises, see preprocess/librispeech.py.
 ```
-python -m preprocess.librispeech_noise
+python -m preprocess.librispeech
 ```
 For CHIME3, set your local path in `src/corpus/Define.py`.
 

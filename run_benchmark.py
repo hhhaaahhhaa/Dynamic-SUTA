@@ -86,7 +86,7 @@ def main(args):
 
     # txt log
     if "transcriptions" in results:
-        with open(f'{config["output_dir"]["log_dir"]}/transcriptions.txt', "w") as f:
+        with open(f'{config["output_dir"]["log_dir"]}/transcriptions.txt', "w", encoding="utf-8") as f:
             if "basenames" in results:
                 for (orig, pred), wer, basename in zip(results["transcriptions"], results["wers"], results["basenames"]):
                     f.write(f"{wer * 100:.2f}%|{basename}|{orig}|{pred}\n")

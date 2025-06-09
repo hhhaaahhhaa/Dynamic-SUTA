@@ -22,6 +22,8 @@ BASIC = {
     "chime_random": (f"{SRC_DIR}/chime.py", "RandomSequence"),
     "chime_real": (f"{SRC_DIR}/chime.py", "UniqueRealSequence"),
     "chime_simu": (f"{SRC_DIR}/chime.py", "UniqueSimuSequence"),
+
+    "ted_random": (f"{SRC_DIR}/ted.py", "RandomSequence"),
 }
 
 TASK_MAPPING = {
@@ -39,6 +41,20 @@ def get_task(name) -> Dataset:
         if len(types) == 3:
             snr_level = int(types[2])
         ds = librispeech_c.RandomSequence(noise_type, snr_level=snr_level)
+        return ds
+    
+    if name.startswith("L2_"):  # e.g. L2_Korean, L2_Korean_AA_5
+        types = name.split("_")
+        if len(types) == 2:
+            from . import l2arctic
+            accent = types[1]
+            ds = l2arctic.SingleAccentSequence(accent)
+        else:
+            from . import l2arctic_c
+            accent = types[1]
+            noise_type = types[2]
+            snr_level = int(types[3])
+            ds = l2arctic_c.SingleAccentSequence(accent, noise_type, snr_level=snr_level)
         return ds
     
     module_path, class_name = TASK_MAPPING[name]

@@ -188,6 +188,35 @@ class CommonVoiceCorpus(object):
         }
 
 
+class StandardCorpus(object):
+    def __init__(self, root: str) -> None:
+        assert os.path.exists(root), f"Can't find {root}, please run preprocess first!"
+        with open(f"{root}/data_info.json", "r", encoding="utf-8") as f:
+            data_info = json.load(f)
+        self.wav_paths = []
+        self.texts = []
+        
+        for instance in data_info:
+            basename = instance["basename"]
+            with open(f"{root}/text/{basename}.txt", "r", encoding="utf-8") as f:
+                text = f.read()
+                self.texts.append(text.strip())
+            self.wav_paths.append(f"{root}/wav/{basename}.wav")
+
+    def __len__(self):
+        return len(self.wav_paths)
+    
+    def get(self, idx) -> dict:
+        wav, _ = librosa.load(self.wav_paths[idx], sr=16000)
+        text = preprocess_text(self.texts[idx])
+
+        return {
+            "id": self.wav_paths[idx],
+            "wav": wav,
+            "text": text
+        }
+
+
 class TEDCorpus(object):
 
     cache_dir = "_cache/TED"
@@ -216,7 +245,7 @@ class TEDCorpus(object):
             "release3",
             split="test",
             streaming=True,
-            use_auth_token=True,
+            # use_auth_token=True,
             trust_remote_code=True
         )
         os.makedirs(f"{self.cache_dir}/wav", exist_ok=True)
@@ -242,12 +271,82 @@ class TEDCorpus(object):
     def __len__(self):
         return len(self.wav_paths)
     
-    def get(self, idx) -> np.ndarray:
+    def get(self, idx) -> dict:
         wav, _ = librosa.load(self.wav_paths[idx], sr=16000)
         text = preprocess_text(self.texts[idx])
+        text = text.replace(" '", "'")
 
         return {
             "id": self.wav_paths[idx],
+            "wav": wav,
+            "text": text
+        }
+
+
+class L2ArcticCorpus(object):
+
+    EXCEPTIONS = {
+        "ABA": ["arctic_a0158", "arctic_b0013", "arctic_b0398"],
+        "ASI": ["arctic_b0013"],
+        "BWC": ["arctic_b0013", "arctic_b0345"],
+        "EBVS": ["arctic_b0408"],
+        "HJK": ["arctic_b0013"],
+        "HKK": ["arctic_b0013"],
+        "LXC": ["arctic_b0013"],
+        "NCC": ["arctic_b0013"],
+        "NJS": ["arctic_b0013"],
+        "RRBI": ["arctic_a0298", "arctic_b0013"],
+        "SKA": ["arctic_b0358"],
+        "TNI": ["arctic_b0013"],
+        "YBAA": ["arctic_a0094", "arctic_b0013"],
+        "YDCK": ["arctic_b0013"],
+        "YKWK": ["arctic_b0013"],
+    }
+
+    def __init__(self) -> None:
+        self.root = Define.L2ARCTIC
+        self._init_info()
+
+    def _init_info(self):
+        self.accents = []
+        self.accent2spks = {}
+        self.spk2accent = {}
+        self.spks = []
+        for accent in os.listdir(self.root):
+            if not os.path.isdir(f"{self.root}/{accent}"):
+                continue
+            self.accents.append(accent)
+            self.accent2spks[accent] = []
+            for spk in os.listdir(f"{self.root}/{accent}"):
+                self.spks.append(spk)
+                self.accent2spks[accent].append(spk)
+                self.spk2accent[spk] = accent
+        assert len(self.spks) == 24
+
+        self.spk2files = {}
+        for spk in self.spks:
+            files = []
+            accent = self.spk2accent[spk]
+            spk_root = f"{self.root}/{accent}/{spk}"
+            for basename in os.listdir(f"{spk_root}/transcript"):
+                basename = basename[:-4]
+                if spk in L2ArcticCorpus.EXCEPTIONS and basename in L2ArcticCorpus.EXCEPTIONS[spk]:
+                    continue
+                files.append({
+                    "wav_path": f"{spk_root}/wav/{basename}.wav",
+                    "text_path": f"{spk_root}/transcript/{basename}.txt"
+                })
+            self.spk2files[spk] = files
+
+    def get(self, spk: str, idx: int) -> dict:
+        q = self.spk2files[spk][idx]
+        wav, _ = librosa.load(q["wav_path"], sr=16000)
+        with open(q["text_path"], 'r') as f:
+            text = f.read()
+        text = preprocess_text(text)
+
+        return {
+            "id": q["wav_path"],
             "wav": wav,
             "text": text
         }

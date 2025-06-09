@@ -10,6 +10,8 @@ python run_benchmark.py -s dsuta-reset -t md_easy -n freq=5/step=5 --strategy_co
 python run_benchmark.py -s dsuta-reset -t md_easy -n freq=5/step=5-fix-freq --strategy_config config/strategy/fix-freq-reset.yaml config/strategy/5step.yaml  # fix-freq reset
 python run_benchmark.py -s dsuta-reset -t md_easy -n freq=5/step=5-oracle --strategy_config config/strategy/oracle-reset.yaml config/strategy/5step.yaml  # oracle reset
 
+python run_benchmark.py -s suta-lm -t ted_random --config config/system/4gram/wav2vec2.yaml --strategy_config config/strategy/suta-lm.yaml config/strategy/20step.yaml  # suta-lm
+
 # Other
 python run_benchmark.py -s csuta -t chime_random --strategy_config config/strategy/1step.yaml  # csuta
 python run_benchmark.py -s awmc -t chime_random --config config/system/awmc.yaml  # AWMC

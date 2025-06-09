@@ -1,0 +1,17 @@
+model_name: "facebook/hubert-large-ls960-ft"
+use_lm: True
+
+opt: AdamW
+lr: 0.00002
+scheduler: null
+
+em_coef: 0.3
+div_coef: 0
+non_blank: True
+train_feature: True
+train_LN: True
+train_all: False
+reweight: True
+bias_only: False
+temp: 2.5
+l2_coef: 0

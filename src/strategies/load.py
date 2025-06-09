@@ -14,6 +14,10 @@ BASIC = {
     "sdpl": (f"{SRC_DIR}/basic.py", "SDPLStrategy"),
 }
 
+SUTALM = {
+    "suta-lm": (f"{SRC_DIR}/suta_lm.py", "SUTALMStrategy"),
+}
+
 DSUTA = {
     "dsuta": (f"{SRC_DIR}/dsuta.py", "DSUTAStrategy"),
     "dsuta-reset": (f"{SRC_DIR}/dsuta_reset.py", "DSUTAResetStrategy"),
@@ -25,6 +29,7 @@ OTHER = {
 
 STRATEGY_MAPPING = {
     **BASIC,
+    **SUTALM,
     **DSUTA,
     **OTHER,
 }
