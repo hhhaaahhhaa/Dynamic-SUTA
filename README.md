@@ -1,5 +1,7 @@
-# Dynamic-SUTA
-Official implementation of EMNLP 2024 paper [Continual Test-time Adaptation for End-to-end Speech Recognition on Noisy Speech](https://arxiv.org/abs/2406.11064).
+# ASR-TTA
+Official implementation of Dynamic-SUTA and SUTA-LM
+- EMNLP 2024 paper [Continual Test-time Adaptation for End-to-end Speech Recognition on Noisy Speech](https://arxiv.org/abs/2406.11064).
+- ASRU 2025 paper [SUTA-LM: Bridging Test-Time Adaptation and Language Model Rescoring for Robust ASR](https://arxiv.org/abs/2506.11121).
 
 ## Installation
 ```
@@ -40,5 +42,14 @@ If you find our work useful, please use the following citation:
       archivePrefix={arXiv},
       primaryClass={eess.AS},
       url={https://arxiv.org/abs/2406.11064}, 
+}
+@misc{huang2025sutalmbridgingtesttimeadaptation,
+      title={SUTA-LM: Bridging Test-Time Adaptation and Language Model Rescoring for Robust ASR}, 
+      author={Wei-Ping Huang and Guan-Ting Lin and Hung-yi Lee},
+      year={2025},
+      eprint={2506.11121},
+      archivePrefix={arXiv},
+      primaryClass={cs.CL},
+      url={https://arxiv.org/abs/2506.11121}, 
 }
 ```
